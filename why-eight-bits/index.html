@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Eight Bits Won? | Memory Dump</title>
+    <meta name="description" content="If a computer can group bits in any quantity, why did eight become the standard? The byte wasn't born from physics. It was born from trade-offs.">
+    <meta property="og:title" content="Why Eight Bits Won? | Memory Dump">
+    <meta property="og:description" content="Nothing in physics says a byte must contain eight bits. Eight won because it was a practical engineering compromise.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Why Eight Bits Won? | Memory Dump">
+    <meta name="twitter:description" content="Nothing in physics says a byte must contain eight bits. Eight won because it was a practical engineering compromise.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Poppins:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/theme.css">
+    <style>
+        .article-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--orange);
+            background: rgba(255, 184, 108, 0.08);
+            border: 1px solid rgba(255, 184, 108, 0.25);
+            border-radius: 999px;
+            padding: 0.25rem 0.875rem;
+        }
+
+        .sketch {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8125rem;
+            line-height: 1.6;
+            background: #1e1f29;
+            border: 1px dashed rgba(98, 114, 164, 0.55);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            margin: 1.75rem 0;
+            color: var(--foreground);
+            opacity: 0.92;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .sketch-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .switch-strip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.35rem;
+            letter-spacing: 0.2em;
+            text-align: center;
+            padding: 1.25rem;
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            margin: 1.5rem 0;
+        }
+
+        .switch-strip .on { color: var(--green); }
+        .switch-strip .off { color: var(--comment); }
+
+        .group-step {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1.15rem 1.35rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .group-step.highlight {
+            border-color: rgba(139, 233, 253, 0.35);
+            background: rgba(139, 233, 253, 0.04);
+        }
+
+        .group-step .bits-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin-bottom: 0.25rem;
+        }
+
+        .group-step .states {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8125rem;
+            color: var(--comment);
+            margin-bottom: 0.35rem;
+        }
+
+        .group-step p {
+            font-size: 0.9375rem;
+            margin: 0;
+            opacity: 0.88;
+            line-height: 1.55;
+        }
+
+        .trade-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 540px) {
+            .trade-grid { grid-template-columns: 1fr; }
+        }
+
+        .trade-box {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1.15rem 1.35rem;
+        }
+
+        .trade-box .label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--orange);
+            margin-bottom: 0.35rem;
+        }
+
+        .trade-box p {
+            font-size: 0.875rem;
+            margin: 0;
+            opacity: 0.85;
+            line-height: 1.55;
+        }
+
+        .byte-block {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: var(--green);
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            margin: 1.25rem 0;
+        }
+
+        .nibble-split {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 0.75rem;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 540px) {
+            .nibble-split { grid-template-columns: 1fr; }
+            .nibble-divider { display: none; }
+        }
+
+        .nibble-half {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .nibble-half .bits {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--green);
+            margin-bottom: 0.35rem;
+        }
+
+        .nibble-half .name {
+            font-size: 0.75rem;
+            color: var(--purple);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .nibble-divider {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--comment);
+            font-size: 0.875rem;
+        }
+
+        .tools-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1.25rem 0 1.75rem;
+        }
+
+        .tool-chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--foreground);
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 999px;
+            padding: 0.35rem 0.875rem;
+        }
+
+        .mental-model {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.75rem 0;
+        }
+
+        @media (max-width: 540px) {
+            .mental-model { grid-template-columns: 1fr; }
+        }
+
+        .mental-box {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .mental-box.after {
+            border-color: rgba(139, 233, 253, 0.35);
+            background: rgba(139, 233, 253, 0.04);
+        }
+
+        .mental-box .tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.5rem;
+        }
+
+        .mental-box.after .tag { color: var(--cyan); }
+
+        .mental-box p {
+            font-size: 0.9375rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .signature-section {
+            margin: 2.5rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .signature-quote {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--foreground);
+            line-height: 1.55;
+            padding: 1.25rem 1.5rem;
+            background: rgba(189, 147, 249, 0.05);
+            border-left: 3px solid var(--purple);
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 0;
+        }
+
+        .series-nav {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin: 1.5rem 0 0;
+        }
+
+        .series-nav a {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--cyan);
+            text-decoration: none;
+        }
+
+        .series-nav a:hover { text-decoration: underline; }
+
+        .series-nav .sep { color: var(--comment); }
+
+        .ref-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .ref-list li {
+            font-size: 0.9375rem;
+            opacity: 0.88;
+            padding-left: 1.25rem;
+            position: relative;
+        }
+
+        .ref-list li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--cyan);
+        }
+
+        .ref-list a {
+            color: var(--cyan);
+            text-decoration: none;
+        }
+
+        .ref-list a:hover { text-decoration: underline; }
+
+        .toc {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            margin: 2rem 0 2.5rem;
+        }
+
+        .toc-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.875rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .toc-list a {
+            font-size: 0.9375rem;
+            color: var(--foreground);
+            text-decoration: none;
+            opacity: 0.85;
+            transition: color 0.15s;
+        }
+
+        .toc-list a:hover { color: var(--cyan); opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <div id="progress-bar"></div>
+
+    <nav class="top-nav">
+        <div class="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+            <a href="../think-in-binary/" style="text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--comment);">←</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--comment);letter-spacing:0.1em;text-transform:uppercase;">Think in Binary</span>
+            </a>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--orange);font-weight:700;">
+                Essay 3 of 3
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero px-6 py-16 md:py-20">
+        <div class="max-w-3xl mx-auto">
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+                <span class="article-tag">
+                    <span style="font-size:0.55rem;">●</span>
+                    Essay · Binary
+                </span>
+                <span class="meta-item">~9 min read</span>
+                <span style="color:var(--current-line);font-size:0.75rem;">·</span>
+                <span class="meta-item">Byte · History · Standards</span>
+            </div>
+
+            <h1 style="font-family:'Poppins',sans-serif;font-weight:900;font-size:3.25rem;line-height:1.1;color:var(--foreground);margin-bottom:1rem;">
+                Why Eight Bits <span style="color:var(--cyan);">Won?</span>
+            </h1>
+
+            <p style="font-size:1.15rem;color:var(--comment);max-width:560px;margin-bottom:0;opacity:1;line-height:1.65;">
+                If a computer can group bits in any quantity… why did eight become the standard?
+            </p>
+        </div>
+    </header>
+
+    <main class="px-6 py-12">
+        <div class="max-w-3xl mx-auto">
+
+            <h2 id="opening" class="section-heading" style="margin-top:0;">It could have been anything</h2>
+
+            <p>In the <a href="../think-in-binary/" style="color:var(--cyan);text-decoration:none;">previous article</a>, we learned to read eight switches as one value. In the <a href="../why-binary-won/" style="color:var(--cyan);text-decoration:none;">first</a>, we learned why those switches exist at all. This article asks what happens when you stop looking at individual bits and start asking: <em>how many should we bundle together?</em></p>
+
+            <p>If you have switches, you can group them however you want. Nothing in physics says a group must contain eight. So why does every computer talk about bytes?</p>
+
+            <div class="reflection-quote">
+                Why did eight win?
+            </div>
+
+            <nav class="toc" aria-label="Table of contents">
+                <div class="toc-title">In this article</div>
+                <ol class="toc-list">
+                    <li><a href="#switches">Bits are just switches</a></li>
+                    <li><a href="#group-sizes">Trying different group sizes</a></li>
+                    <li><a href="#history">History had other ideas</a></li>
+                    <li><a href="#tradeoff">A good trade-off</a></li>
+                    <li><a href="#byte">Meet the byte</a></li>
+                    <li><a href="#nibble">Four bits have a name too</a></li>
+                    <li><a href="#tools">Why this matters</a></li>
+                    <li><a href="#mental-model">Mental model</a></li>
+                    <li><a href="#keep">Three sentences to keep</a></li>
+                    <li><a href="#references">Further reading</a></li>
+                    <li><a href="#next">What's next</a></li>
+                </ol>
+            </nav>
+
+            <hr class="divider">
+
+            <h2 id="switches" class="section-heading" style="margin-top:0;">Bits are just switches</h2>
+
+            <p>Eight switches. Not a number yet. Just on and off.</p>
+
+            <div class="switch-strip">
+                <span class="off">○</span><span class="on">●</span><span class="on">●</span><span class="off">○</span><span class="off">○</span><span class="on">●</span><span class="off">○</span><span class="on">●</span>
+            </div>
+
+            <p>The question isn't what they mean. It's how many belong in a bundle. Group too few and you can't represent enough. Group too many and everything gets expensive. Somewhere in the middle, engineers had to pick.</p>
+
+            <hr class="divider">
+
+            <h2 id="group-sizes" class="section-heading" style="margin-top:0;">Trying different group sizes</h2>
+
+            <p>Imagine you're designing the first character-based machine. Each group of switches must represent symbols: letters, digits, punctuation, control codes. How many switches per symbol?</p>
+
+            <span class="sketch-label">The search for enough room</span>
+            <div class="sketch">4 bits  →  2⁴ = 16 states   →  too small
+5 bits  →  2⁵ = 32 states   →  still tight
+6 bits  →  2⁶ = 64 states   →  interesting…
+7 bits  →  2⁷ = 128 states  →  ASCII fits
+8 bits  →  2⁸ = 256 states  →  room to grow</div>
+
+            <div class="group-step">
+                <div class="bits-label">Four bits</div>
+                <div class="states">2⁴ = 16 possible values</div>
+                <p>Sixteen symbols. The alphabet alone needs twenty-six. Not even close.</p>
+            </div>
+
+            <div class="group-step">
+                <div class="bits-label">Five bits</div>
+                <div class="states">2⁵ = 32 possible values</div>
+                <p>Now the letters fit. But numbers, punctuation, spaces, and control characters still need room. Still too tight.</p>
+            </div>
+
+            <div class="group-step">
+                <div class="bits-label">Six bits</div>
+                <div class="states">2⁶ = 64 possible values</div>
+                <p>Sixty-four symbols. A real improvement. Enough for a useful subset, but still cramped for a general-purpose text system.</p>
+            </div>
+
+            {% from "macros/rabbit-hole.njk" import rabbitHole %}
+            {% call rabbitHole(
+                id="rabbit-base64",
+                teaser="Optional detour: why Base64 uses exactly 64 symbols.",
+                intro="",
+                outro=""
+            ) %}
+                    <p>Ever wondered why Base64 uses exactly 64 characters? Because every Base64 digit encodes exactly six bits. The encoding inherited the room size of a 6-bit world: 2⁶ = 64. The standard outlived the hardware that inspired it.</p>
+            {% endcall %}
+
+            <div class="group-step">
+                <div class="bits-label">Seven bits</div>
+                <div class="states">2⁷ = 128 possible values</div>
+                <p>One hundred twenty-eight characters. Letters, digits, punctuation, control codes. ASCII proved that seven bits was enough to write English. For a while, it seemed sufficient.</p>
+            </div>
+
+            <div class="group-step highlight">
+                <div class="bits-label">Eight bits</div>
+                <div class="states">2⁸ = 256 possible values</div>
+                <p>Double the space. Room for accented characters, symbols, extended sets, and future expansion. Not because seven failed, but because eight left headroom. Engineering prefers margin.</p>
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="history" class="section-heading" style="margin-top:0;">History had other ideas</h2>
+
+            <p>Knowing that eight bits is a good size doesn't explain why it became <em>the</em> size. For years, it wasn't.</p>
+
+            <p>Early computers used 6-bit, 7-bit, 8-bit, and even 9-bit bytes, depending on the manufacturer. There was no universal standard. A "byte" originally meant the smallest unit a machine used to store one character, and that unit varied from architecture to architecture.</p>
+
+            <p>That changed when IBM standardized the System/360 around 8-bit bytes in 1964. One decision, one ecosystem, millions of machines aligned. The argument didn't end overnight, but the direction became clear.</p>
+
+            {% call rabbitHole(
+                id="rabbit-byte-word",
+                teaser="Optional detour: the original meaning of the word byte.",
+                intro="",
+                outro=""
+            ) %}
+                    <p>The word "byte" comes from "bite" (as in a small bite of data), deliberately misspelled to avoid confusion with "bit." When Werner Buchholz coined it in 1956, a byte wasn't fixed at eight. It meant whatever chunk of bits a given machine used for one character. Eight won later. The name stayed.</p>
+            {% endcall %}
+
+            <hr class="divider">
+
+            <h2 id="tradeoff" class="section-heading" style="margin-top:0;">A good trade-off</h2>
+
+            <p>Eight wasn't mathematically special. It sat in the middle of a trade-off engineers still make today.</p>
+
+            <div class="trade-grid">
+                <div class="trade-box">
+                    <div class="label">Too few bits</div>
+                    <p>Not enough symbols. Not enough range. Constant workarounds to fit data that doesn't belong.</p>
+                </div>
+                <div class="trade-box">
+                    <div class="label">Too many bits</div>
+                    <p>More memory. More wiring. More cost. Paying for capacity you don't use yet.</p>
+                </div>
+            </div>
+
+            <div class="reflection-quote">
+                Eight wasn't perfect. It was practical.
+            </div>
+
+            <p>Standards are often born from good trade-offs, not perfect ideas. That pattern shows up far beyond hardware: protocols, languages, APIs. Good enough, widely adopted, hard to replace.</p>
+
+            <hr class="divider">
+
+            <h2 id="byte" class="section-heading" style="margin-top:0;">Meet the byte</h2>
+
+            <p>Today, a byte almost always means eight bits. That's the convention this trilogy has used in every example.</p>
+
+            <div class="byte-block">10101100  →  1 byte</div>
+
+            <p>Eight switches, one bundle, one addressable unit of memory. We've treated every value so far as unsigned: 0 through 255. Signed numbers, where the highest bit means something different, are a story for another article.</p>
+
+            <hr class="divider">
+
+            <h2 id="nibble" class="section-heading" style="margin-top:0;">Four bits have a name too</h2>
+
+            <p>Half a byte already has a name: a <strong>nibble</strong> (sometimes spelled "nybble"). Four bits. Sixteen possible values. Enough to represent one hexadecimal digit, though we're not going there yet.</p>
+
+            <div class="nibble-split">
+                <div class="nibble-half">
+                    <div class="bits">1010</div>
+                    <div class="name">Nibble</div>
+                </div>
+                <div class="nibble-divider">|</div>
+                <div class="nibble-half">
+                    <div class="bits">1100</div>
+                    <div class="name">Nibble</div>
+                </div>
+            </div>
+
+            <p>Split any byte down the middle and you get two nibbles. That split will matter soon. For now, just notice that the byte has structure inside it.</p>
+
+            {% call rabbitHole(
+                id="rabbit-nibble",
+                teaser="Optional detour: why nibble?",
+                intro="",
+                outro=""
+            ) %}
+                    <p>If "byte" is a bite of data, "nibble" is half a bite: a nibble. It's a historical pun that stuck around in engineering slang. Not official terminology you'll find in every spec, but you'll hear it in debug sessions and datasheets often enough to remember.</p>
+            {% endcall %}
+
+            <hr class="divider">
+
+            <h2 id="tools" class="section-heading" style="margin-top:0;">Why this matters</h2>
+
+            <p>Once bytes became the standard, everything built on top of them.</p>
+
+            <div class="tools-row">
+                <span class="tool-chip">Memory dumps</span>
+                <span class="tool-chip">Disassemblers</span>
+                <span class="tool-chip">Hex editors</span>
+                <span class="tool-chip">Debuggers</span>
+            </div>
+
+            <p>These tools don't show bits because humans struggle to read long strings of ones and zeros. They show bytes, grouped the way history grouped them. Not an arbitrary choice by the toolmaker. A consequence of the standard that won.</p>
+
+            {% call rabbitHole(
+                id="rabbit-consoles",
+                teaser="Optional detour: why was the Nintendo 64 called 64?",
+                intro="",
+                outro=""
+            ) %}
+                    <p>If you grew up with game consoles, you've heard this vocabulary before. The NES era was "8-bit." The SNES and Mega Drive were "16-bit." The Nintendo 64 put the number right in the name. It sounds like the same idea as this article. It isn't quite.</p>
+
+                    <p>When the industry said "8-bit," it usually meant the <strong>processor</strong>: 8-bit CPUs like the 6502 inside the NES. Registers, data paths, the width of a single operation. That aligned with a world already thinking in bytes, but "8-bit console" was shorthand for the CPU generation, not a claim about how memory was labeled on paper.</p>
+
+                    <p>The jump to "16-bit" followed the same logic: wider processors, more capable hardware, bigger games. Still bytes underneath. Still eight bits per addressable unit in memory.</p>
+
+                    <p>Then came the Nintendo 64. The "64" marketed a <strong>64-bit CPU</strong>: wider registers, a broader address space, a bigger number on the box. Memory in that console was still organized in 8-bit bytes. The PlayStation, marketed as "32-bit" in the same era, also used 8-bit bytes. Same byte. Different processor generation. Different marketing.</p>
+
+                    <p>The lesson: when someone says "N-bit," ask <em>bits of what?</em> Processor width, bus width, byte size, and brand name are not the same conversation. Marketing is often born from the biggest number that fits on the box.</p>
+            {% endcall %}
+
+            <hr class="divider">
+
+            <h2 id="mental-model" class="section-heading" style="margin-top:0;">Mental model</h2>
+
+            <div class="mental-model">
+                <div class="mental-box">
+                    <div class="tag">Before</div>
+                    <p>A byte has eight bits because that's the definition.</p>
+                </div>
+                <div class="mental-box after">
+                    <div class="tag">After</div>
+                    <p>A byte has eight bits because eight turned out to be a practical engineering standard.</p>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="keep" class="section-heading" style="margin-top:0;">Three sentences to keep</h2>
+
+            <div class="signature-section">
+                <p class="signature-quote">Nothing in physics says a byte must contain eight bits.</p>
+                <p class="signature-quote">Eight bits didn't become a standard because they were mathematically special. They became a standard because they were a good engineering compromise.</p>
+                <p class="signature-quote">Standards are often born from good trade-offs, not perfect ideas.</p>
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="references" class="section-heading" style="margin-top:0;">Further reading</h2>
+
+            <ul class="ref-list">
+                <li><a href="../why-binary-won/">Why Binary Won?</a> Essay 1 in this series.</li>
+                <li><a href="../think-in-binary/">Think in Binary</a> Essay 2 in this series.</li>
+                <li>Charles Petzold, <a href="https://www.charlespetzold.com/code/" target="_blank" rel="noopener"><em>Code</em></a>. Chapter 12 on bytes and hexadecimal notation.</li>
+            </ul>
+
+            <hr class="divider">
+
+            <h2 id="next" class="section-heading" style="margin-top:0;">What's next</h2>
+
+            <p>We now know why computers group bits into bytes. The Binary Dump trilogy ends here: physics, cognition, convention.</p>
+
+            <div class="reflection-quote">
+                If a byte is made of eight bits… why does every debugger show 0xAC instead of 10101100?
+            </div>
+
+            <p>Hexadecimal is next. After that: what happens when the highest bit stops being weight and becomes sign. But first, the notation every tool uses to hide the ones and zeros.</p>
+
+            <div class="series-nav">
+                <a href="../why-binary-won/">← Why Binary Won?</a>
+                <span class="sep">·</span>
+                <a href="../think-in-binary/">Think in Binary</a>
+                <span class="sep">·</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--comment);">Why Eight Bits Won?</span>
+            </div>
+
+        </div>
+    </main>
+
+    <section style="border-top:1px solid var(--current-line);padding:3rem 1.5rem 2rem;">
+        <div class="max-w-3xl mx-auto">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--purple);display:block;margin-bottom:0.5rem;">Discussion</span>
+            <h2 style="font-family:'Poppins',sans-serif;font-weight:700;font-size:1.25rem;color:var(--foreground);margin:0 0 1.5rem;">Questions? Different history you've read?</h2>
+            <script src="https://giscus.app/client.js"
+                data-repo="rafaelhziliao/memory-dump"
+                data-repo-id="R_kgDOPl2p4g"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOPl2p4s4C_XEU"
+                data-mapping="pathname"
+                data-strict="1"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="top"
+                data-theme="catppuccin_macchiato"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+            </script>
+        </div>
+    </section>
+
+    <footer style="border-top:1px solid var(--current-line);padding:2rem 1.5rem;margin-top:0;">
+        <div class="max-w-3xl mx-auto flex items-center justify-between" style="flex-wrap:wrap;gap:1rem;">
+            <a href="../" style="text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--comment);">
+                ← Memory Dump
+            </a>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--comment);">
+                Why Eight Bits Won? · Essay 3 of 3
+            </span>
+        </div>
+    </footer>
+
+    <script>
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            document.getElementById('progress-bar').style.width = pct + '%';
+        });
+    </script>
+
+    {% include "components/rabbit-hole-script.njk" %}
+
+</body>
+</html>

@@ -117,6 +117,61 @@ description: Mobile Security Engineer. Writing on iOS instrumentation, debugging
             >
         </div>
 
+        {% set binaryEssays = articles | where("seriesSlug", "binary") %}
+        {% if binaryEssays.length %}
+        <p style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--comment);margin-bottom:1.25rem;">Essays · Binary</p>
+
+        <div style="display:flex;flex-direction:column;gap:1rem;margin-bottom:2.5rem;">
+            {% for article in binaryEssays | sort(false, false, "order") %}
+                {% if article.status == "published" %}
+                <a href="{{ article.path | url }}" class="series-card">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;">
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--orange);background:rgba(255,184,108,0.08);border:1px solid rgba(255,184,108,0.2);border-radius:999px;padding:0.2rem 0.7rem;">{{ article.chapter }}</span>
+                    </div>
+                    <h2 style="font-family:'Poppins',sans-serif;font-weight:900;font-size:1.35rem;color:var(--cyan);margin:0 0 0.5rem;">{{ article.title }}</h2>
+                    <p style="font-size:0.9rem;color:var(--foreground);opacity:0.8;margin:0 0 1.1rem;line-height:1.6;">{{ article.description }}</p>
+                    <div style="display:flex;align-items:center;gap:0.4rem;font-weight:700;color:var(--purple);font-size:0.875rem;">
+                        <span>{{ article.cta }}</span>
+                        <span class="card-arrow">→</span>
+                    </div>
+                </a>
+                {% elif article.status == "coming-soon" %}
+                <div class="series-card" style="opacity:0.45;cursor:default;">
+                    <div style="margin-bottom:1rem;">
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--comment);background:rgba(98,114,164,0.08);border:1px solid rgba(98,114,164,0.2);border-radius:999px;padding:0.2rem 0.7rem;">{{ article.chapter }}</span>
+                    </div>
+                    <h2 style="font-family:'Poppins',sans-serif;font-weight:900;font-size:1.35rem;color:var(--comment);margin:0 0 0.5rem;">{{ article.title }}</h2>
+                    <p style="font-size:0.9rem;color:var(--foreground);opacity:0.5;margin:0 0 1.1rem;line-height:1.6;">{{ article.description }}</p>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;font-weight:700;color:var(--orange);background:rgba(255,184,108,0.08);border:1px solid rgba(255,184,108,0.2);border-radius:4px;padding:0.15rem 0.5rem;">Coming soon</span>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% set essays = articles | where("seriesSlug", null) %}
+        {% if essays.length %}
+        <p style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--comment);margin-bottom:1.25rem;">Essays</p>
+
+        <div style="display:flex;flex-direction:column;gap:1rem;margin-bottom:2.5rem;">
+            {% for article in essays %}
+                {% if article.status == "published" %}
+                <a href="{{ article.path | url }}" class="series-card">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;">
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--orange);background:rgba(255,184,108,0.08);border:1px solid rgba(255,184,108,0.2);border-radius:999px;padding:0.2rem 0.7rem;">{{ article.badge }}</span>
+                    </div>
+                    <h2 style="font-family:'Poppins',sans-serif;font-weight:900;font-size:1.35rem;color:var(--cyan);margin:0 0 0.5rem;">{{ article.title }}</h2>
+                    <p style="font-size:0.9rem;color:var(--foreground);opacity:0.8;margin:0 0 1.1rem;line-height:1.6;">{{ article.description }}</p>
+                    <div style="display:flex;align-items:center;gap:0.4rem;font-weight:700;color:var(--purple);font-size:0.875rem;">
+                        <span>{{ article.cta }}</span>
+                        <span class="card-arrow">→</span>
+                    </div>
+                </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <p style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--comment);margin-bottom:1.25rem;">Series</p>
 
         <div style="display:flex;flex-direction:column;gap:1rem;">

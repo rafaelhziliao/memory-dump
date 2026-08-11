@@ -337,3 +337,110 @@ code {
     .section-heading { font-size: 1.25rem; }
     .code-block-body { padding: 1rem; font-size: 0.8rem; }
 }
+
+/* --- Rabbit Hole (collapsible optional detour) ----------------------------- */
+
+.rabbit-hole {
+    background: rgba(189, 147, 249, 0.05);
+    border: 1px solid rgba(189, 147, 249, 0.22);
+    border-left: 3px solid var(--purple);
+    border-radius: 0 0.75rem 0.75rem 0;
+    margin: 2rem 0;
+    overflow: hidden;
+}
+
+.rabbit-toggle {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 1.25rem 1.75rem;
+    color: inherit;
+    transition: background 0.15s;
+}
+
+.rabbit-toggle:hover {
+    background: rgba(189, 147, 249, 0.06);
+}
+
+.rabbit-toggle-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.rabbit-toggle-text {
+    flex: 1;
+    min-width: 200px;
+}
+
+.rabbit-hole .rabbit-title {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--purple);
+    margin-bottom: 0.35rem;
+}
+
+.rabbit-teaser {
+    font-size: 0.875rem;
+    color: var(--comment);
+    line-height: 1.55;
+    margin: 0;
+}
+
+.rabbit-chevron {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--purple);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.rabbit-body {
+    display: none;
+    padding: 0 1.75rem 1.5rem;
+    border-top: 1px solid rgba(189, 147, 249, 0.15);
+}
+
+.rabbit-hole.expanded .rabbit-body {
+    display: block;
+}
+
+.rabbit-hole.expanded .rabbit-teaser {
+    display: none;
+}
+
+.rabbit-intro {
+    font-size: 0.875rem;
+    color: var(--comment);
+    line-height: 1.6;
+    margin: 1.25rem 0;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(189, 147, 249, 0.15);
+}
+
+.rabbit-body p {
+    font-size: 0.9375rem;
+    margin-bottom: 0.875rem;
+}
+
+.rabbit-body p:last-child {
+    margin-bottom: 0;
+}
+
+.rabbit-outro {
+    font-size: 0.875rem;
+    color: var(--comment);
+    font-style: italic;
+    margin: 0;
+}

@@ -1,0 +1,42 @@
+{#
+  Rabbit Hole — collapsible optional detour
+
+  Requires once per page (before </body>):
+    {% include "components/rabbit-hole-script.njk" %}
+
+  Styles live in assets/css/theme.css (.rabbit-hole)
+
+  Usage:
+    {% from "macros/rabbit-hole.njk" import rabbitHole %}
+
+    {% call rabbitHole(
+      id="rabbit-hole",
+      teaser="One-line hook shown when collapsed",
+      intro="Disclaimer shown when expanded (optional)",
+      outro="Closing italic line (optional)"
+    ) %}
+      <p>Detour content here.</p>
+    {% endcall %}
+#}
+{% macro rabbitHole(id, teaser, intro, outro) %}
+<div id="{{ id }}" class="rabbit-hole">
+    <button class="rabbit-toggle" type="button" aria-expanded="false" aria-controls="{{ id }}-body" onclick="toggleRabbitHole('{{ id }}')">
+        <div class="rabbit-toggle-inner">
+            <div class="rabbit-toggle-text">
+                <div class="rabbit-title">🐇 Rabbit Hole</div>
+                <p class="rabbit-teaser">{{ teaser }}</p>
+            </div>
+            <span class="rabbit-chevron" id="{{ id }}-chevron">Follow the rabbit →</span>
+        </div>
+    </button>
+    <div id="{{ id }}-body" class="rabbit-body">
+        {% if intro %}
+        <p class="rabbit-intro">{{ intro }}</p>
+        {% endif %}
+        {{ caller() }}
+        {% if outro %}
+        <p class="rabbit-outro">{{ outro }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}

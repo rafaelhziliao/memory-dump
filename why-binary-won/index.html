@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Binary Won?</title>
+    <meta name="description" content="I knew how to convert decimal to binary. I couldn't explain why computers use it. Binary didn't win because of math. It won because of physics.">
+    <meta property="og:title" content="Why Binary Won? | Memory Dump">
+    <meta property="og:description" content="Binary didn't win because it's mathematically elegant. It won because it's physically reliable.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Why Binary Won? | Memory Dump">
+    <meta name="twitter:description" content="Binary didn't win because it's mathematically elegant. It won because it's physically reliable.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Poppins:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/theme.css">
+    <style>
+        .article-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--orange);
+            background: rgba(255, 184, 108, 0.08);
+            border: 1px solid rgba(255, 184, 108, 0.25);
+            border-radius: 999px;
+            padding: 0.25rem 0.875rem;
+        }
+
+        /* Sketch-style diagrams */
+        .sketch {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8125rem;
+            line-height: 1.6;
+            background: #1e1f29;
+            border: 1px dashed rgba(98, 114, 164, 0.55);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            margin: 1.75rem 0;
+            color: var(--foreground);
+            opacity: 0.92;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .sketch-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        /* Voltage comparison */
+        .signal-pair {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 0.75rem;
+            align-items: center;
+            margin: 1.25rem 0;
+        }
+
+        @media (max-width: 540px) {
+            .signal-pair { grid-template-columns: 1fr; }
+            .signal-arrow { display: none; }
+        }
+
+        .signal-box {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            text-align: center;
+        }
+
+        .signal-box .label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.35rem;
+        }
+
+        .signal-box .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .signal-arrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            color: var(--comment);
+            text-align: center;
+        }
+
+        .signal-question {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--orange);
+            text-align: center;
+            margin: 0.75rem 0 0;
+        }
+
+        /* Base choice list */
+        .base-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1.25rem 0 1.75rem;
+        }
+
+        .base-chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--foreground);
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 999px;
+            padding: 0.35rem 0.875rem;
+        }
+
+        .base-chip.highlight {
+            color: var(--green);
+            border-color: rgba(80, 250, 123, 0.4);
+            background: rgba(80, 250, 123, 0.06);
+        }
+
+        /* Threshold diagram */
+        .threshold-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            margin: 1.75rem 0;
+        }
+
+        .threshold-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .threshold-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8125rem;
+            color: var(--foreground);
+            flex: 1;
+            text-align: right;
+        }
+
+        .threshold-arrow {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--comment);
+            flex-shrink: 0;
+        }
+
+        .threshold-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--green);
+            width: 2rem;
+            text-align: center;
+        }
+
+        .threshold-divider {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--purple);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.75rem 0;
+            text-align: center;
+            width: 100%;
+            max-width: 320px;
+            border-top: 1px dashed rgba(189, 147, 249, 0.35);
+            border-bottom: 1px dashed rgba(189, 147, 249, 0.35);
+            margin: 0.5rem 0;
+        }
+
+        /* Mental model */
+        .mental-model {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.75rem 0;
+        }
+
+        @media (max-width: 540px) {
+            .mental-model { grid-template-columns: 1fr; }
+        }
+
+        .mental-box {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .mental-box.after {
+            border-color: rgba(139, 233, 253, 0.35);
+            background: rgba(139, 233, 253, 0.04);
+        }
+
+        .mental-box .tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.5rem;
+        }
+
+        .mental-box.after .tag { color: var(--cyan); }
+
+        .mental-box p {
+            font-size: 0.9375rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        /* Signature quotes */
+        .signature-section {
+            margin: 2.5rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .signature-quote {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--foreground);
+            line-height: 1.55;
+            padding: 1.25rem 1.5rem;
+            background: rgba(189, 147, 249, 0.05);
+            border-left: 3px solid var(--purple);
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 0;
+        }
+
+        /* Thesis quote — larger */
+        .thesis-quote {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--cyan);
+            line-height: 1.45;
+            margin: 2rem 0;
+            padding: 1.75rem 2rem;
+            background: rgba(139, 233, 253, 0.06);
+            border: 1px solid rgba(139, 233, 253, 0.2);
+            border-radius: 0.75rem;
+            text-align: center;
+        }
+
+        .thesis-quote .line2 {
+            display: block;
+            margin-top: 0.75rem;
+            color: var(--foreground);
+            font-size: 1.15rem;
+            opacity: 0.9;
+        }
+
+        /* Bit pattern display */
+        .bit-pattern {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            letter-spacing: 0.15em;
+            color: var(--green);
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1rem 1.5rem;
+            text-align: center;
+            margin: 1.25rem 0;
+        }
+
+        .bit-pattern .off { color: var(--comment); }
+        .bit-pattern .on  { color: var(--green); }
+
+        /* Noise factors */
+        .factor-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1.25rem 0 1.75rem;
+        }
+
+        .factor-chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--orange);
+            background: rgba(255, 184, 108, 0.08);
+            border: 1px solid rgba(255, 184, 108, 0.25);
+            border-radius: 4px;
+            padding: 0.3rem 0.75rem;
+        }
+
+        /* References */
+        .ref-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .ref-list li {
+            font-size: 0.9375rem;
+            opacity: 0.88;
+            padding-left: 1.25rem;
+            position: relative;
+        }
+
+        .ref-list li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--cyan);
+        }
+
+        .ref-list a {
+            color: var(--cyan);
+            text-decoration: none;
+        }
+
+        .ref-list a:hover { text-decoration: underline; }
+
+        /* Table of contents */
+        .toc {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            margin: 2rem 0 2.5rem;
+        }
+
+        .toc-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.875rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .toc-list a {
+            font-size: 0.9375rem;
+            color: var(--foreground);
+            text-decoration: none;
+            opacity: 0.85;
+            transition: color 0.15s, opacity 0.15s;
+            display: block;
+            padding: 0.15rem 0;
+        }
+
+        .toc-list a:hover {
+            color: var(--cyan);
+            opacity: 1;
+        }
+
+        /* Physics concept cards */
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 640px) {
+            .concept-grid { grid-template-columns: 1fr; }
+        }
+
+        .concept-card {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1rem 1.15rem;
+        }
+
+        .concept-card .name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--orange);
+            margin-bottom: 0.35rem;
+        }
+
+        .concept-card p {
+            font-size: 0.875rem;
+            margin: 0;
+            opacity: 0.85;
+            line-height: 1.55;
+        }
+
+        /* History cards */
+        .history-card {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            margin: 1.25rem 0;
+        }
+
+        .history-card .era {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.35rem;
+        }
+
+        .history-card .name {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .history-card p {
+            font-size: 0.9375rem;
+            margin: 0;
+            opacity: 0.88;
+            line-height: 1.65;
+        }
+
+        .history-card p + p {
+            margin-top: 0.75rem;
+        }
+
+        /* Series teaser */
+        .series-teaser {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0 0;
+        }
+
+        .series-teaser-item {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+        }
+
+        .series-teaser-item .label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.25rem;
+        }
+
+        .series-teaser-item .title {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--foreground);
+            margin-bottom: 0.2rem;
+        }
+
+        .series-teaser-item .desc {
+            font-size: 0.8125rem;
+            color: var(--comment);
+            margin: 0;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="progress-bar"></div>
+
+    <!-- Nav -->
+    <nav class="top-nav">
+        <div class="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+            <a href="../" style="text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--comment);">←</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--comment);letter-spacing:0.1em;text-transform:uppercase;">Memory Dump</span>
+            </a>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--orange);font-weight:700;">
+                Essay 1 of 3
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="hero px-6 py-16 md:py-20">
+        <div class="max-w-3xl mx-auto">
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+                <span class="article-tag">
+                    <span style="font-size:0.55rem;">●</span>
+                    Essay
+                </span>
+                <span class="meta-item">~9 min read</span>
+                <span style="color:var(--current-line);font-size:0.75rem;">·</span>
+                <span class="meta-item">Hardware · Binary · Fundamentals</span>
+            </div>
+
+            <h1 style="font-family:'Poppins',sans-serif;font-weight:900;font-size:3.25rem;line-height:1.1;color:var(--foreground);margin-bottom:1rem;">
+                Why Binary <span style="color:var(--cyan);">Won?</span>
+            </h1>
+
+            <p style="font-size:1.15rem;color:var(--comment);max-width:560px;margin-bottom:0;opacity:1;line-height:1.65;">
+                I thought I understood binary. Turns out, I only knew how to convert numbers.
+            </p>
+        </div>
+    </header>
+
+    <!-- Article -->
+    <main class="px-6 py-12">
+        <div class="max-w-3xl mx-auto">
+
+            <!-- Opening -->
+            <h2 id="question" class="section-heading" style="margin-top:0;">A question I couldn't answer</h2>
+
+            <p>I've been reading <em>Disarming Code</em> by Jonathan Levin. The book starts with binary, hexadecimal, words and dwords. I realized something uncomfortable: I knew how to convert decimal to binary, but I couldn't answer a much simpler question.</p>
+
+            <div class="reflection-quote">
+                Why did binary win?
+            </div>
+
+            <p>Not "how do I convert 150 to binary?" Not "what is a dword?" But why, out of every number system humans have invented, the one with only two symbols became the foundation of every computer on Earth.</p>
+
+            <p>I could do the math. I couldn't explain the physics.</p>
+
+            <nav class="toc" aria-label="Table of contents">
+                <div class="toc-title">In this article</div>
+                <ol class="toc-list">
+                    <li><a href="#first-computer">Building the first computer</a></li>
+                    <li><a href="#physics">The physics problem</a></li>
+                    <li><a href="#engineering-trick">The engineering trick</a></li>
+                    <li><a href="#transistor">Meet the transistor</a></li>
+                    <li><a href="#switches">From switches to information</a></li>
+                    <li><a href="#no-numbers">A computer doesn't understand numbers</a></li>
+                    <li><a href="#thesis">Binary didn't win because of math</a></li>
+                    <li><a href="#others-tried">Others tried</a></li>
+                    <li><a href="#mental-model">Mental model</a></li>
+                    <li><a href="#keep">Three sentences to keep</a></li>
+                    <li><a href="#references">Further reading</a></li>
+                    <li><a href="#next">What's next</a></li>
+                </ol>
+            </nav>
+
+            <hr class="divider">
+
+            <h2 id="first-computer" class="section-heading" style="margin-top:0;">Imagine you had to build the first computer.</h2>
+
+            <p>You're at the beginning. No conventions yet. No standards. You get to choose how the machine represents information.</p>
+
+            <p>You could pick almost anything:</p>
+
+            <div class="base-list">
+                <span class="base-chip">Decimal</span>
+                <span class="base-chip">Base 3</span>
+                <span class="base-chip">Base 12</span>
+                <span class="base-chip">Hexadecimal</span>
+                <span class="base-chip highlight">Binary</span>
+            </div>
+
+            <p>Decimal feels natural. We have ten fingers. Base 12 divides nicely. Hexadecimal is compact. Binary looks absurdly limited. Only two digits. Zero and one. Why would anyone choose the smallest one?</p>
+
+            <div class="reflection-quote">
+                Why would anyone choose the smallest one?
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="physics" class="section-heading" style="margin-top:0;">The physics problem</h2>
+
+            <p>To answer that, we need to leave the textbook. In a perfect world, you send a voltage and receive exactly what you sent. Real circuits never work that way. Signals travel through wire, silicon, and air. Along the way, the value drifts.</p>
+
+            <p>Three forces are always working against you:</p>
+
+            <div class="concept-grid">
+                <div class="concept-card">
+                    <div class="name">Noise</div>
+                    <p>Random fluctuations in the signal. Electrons don't move in straight lines. Every reading wobbles slightly around the true value.</p>
+                </div>
+                <div class="concept-card">
+                    <div class="name">Heat</div>
+                    <p>Resistance increases with temperature. Components expand, thresholds shift, and the same circuit behaves differently after running for an hour.</p>
+                </div>
+                <div class="concept-card">
+                    <div class="name">Interference</div>
+                    <p>Nearby wires and components leak electromagnetic energy into each other. A signal meant to be 3V picks up ghost voltages from its neighbors.</p>
+                </div>
+            </div>
+
+            <p>None of this matters much if you only need to tell "high" from "low." It matters enormously if you need to tell 5V from 4V from 3V.</p>
+
+            <p>Watch what happens in practice:</p>
+
+            <div class="signal-pair">
+                <div class="signal-box">
+                    <div class="label">Send</div>
+                    <div class="value">5V</div>
+                </div>
+                <div class="signal-arrow">→</div>
+                <div class="signal-box">
+                    <div class="label">Receive</div>
+                    <div class="value">4.81V</div>
+                </div>
+            </div>
+            <p class="signal-question">Still a five?</p>
+
+            <div class="signal-pair">
+                <div class="signal-box">
+                    <div class="label">Send</div>
+                    <div class="value">3V</div>
+                </div>
+                <div class="signal-arrow">→</div>
+                <div class="signal-box">
+                    <div class="label">Receive</div>
+                    <div class="value">3.12V</div>
+                </div>
+            </div>
+            <p class="signal-question">Still a three?</p>
+
+            <p>Now connect this to the number system choice. A decimal machine needs to distinguish ten voltage levels, one for each digit 0 through 9. That means dividing the available voltage range into ten narrow bands. Each band gets a thin slice of the spectrum, with almost no margin for error.</p>
+
+            <p>A small drift from noise, a shift from heat, a spike from interference, and a 5 becomes a 4. Or a 6. The receiver can't tell. The more levels your system requires, the tighter each level must be, and the more fragile the whole design becomes.</p>
+
+            <span class="sketch-label">Ideal vs. real</span>
+            <div class="sketch">Ideal          Real
+ 5V      →     4.83V</div>
+
+            <div class="callout insight">
+                <span class="callout-icon">💡</span>
+                <div class="callout-body">
+                    <strong>The real constraint</strong>
+                    The problem isn't mathematics. It's engineering. You are trying to read a signal through wire, heat, distance, and interference, and you need to get the right answer every time. The number system you choose must survive that reality.
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="engineering-trick" class="section-heading" style="margin-top:0;">The engineering trick</h2>
+
+            <p>Instead of asking a circuit to distinguish ten levels, ask it to distinguish two.</p>
+
+            <p>Pick a threshold in the middle. Everything below it means one thing. Everything above means another.</p>
+
+            <div class="threshold-flow">
+                <div class="threshold-row">
+                    <span class="threshold-label">Below 2.5V</span>
+                    <span class="threshold-arrow">↓</span>
+                    <span class="threshold-value">0</span>
+                </div>
+                <div class="threshold-divider">threshold · 2.5V</div>
+                <div class="threshold-row">
+                    <span class="threshold-label">Above 2.5V</span>
+                    <span class="threshold-arrow">↓</span>
+                    <span class="threshold-value">1</span>
+                </div>
+            </div>
+
+            <p>4.81V? Clearly above the line. That's a 1. 0.3V? Clearly below. That's a 0. You don't need the voltage to be exact. You need it to be on the right side of the line.</p>
+
+            <p>This is where <strong>logical levels</strong> are born. Not numbers in the abstract, but physical states with enough margin to survive the real world.</p>
+
+            <hr class="divider">
+
+            <h2 id="transistor" class="section-heading" style="margin-top:0;">Meet the transistor</h2>
+
+            <p>Binary logic didn't wait for silicon. Decades before the transistor, engineers were already building computers out of mechanical relays and vacuum tubes. A relay is either open or closed. A tube is either conducting or not. Two states, naturally.</p>
+
+            <p>The transistor arrived in 1947 and made those switches smaller, faster, cheaper, and far more reliable. But it didn't invent the idea. It scaled it.</p>
+
+            <p>At the level that matters here, a transistor does one thing:</p>
+
+            <p>It works like a switch.</p>
+
+            <span class="sketch-label">Switch → bit</span>
+            <div class="sketch">Relay open     →  0
+Relay closed   →  1
+
+Tube off       →  0
+Tube on        →  1
+
+Transistor off →  0
+Transistor on  →  1</div>
+
+            <p>Think of a light switch on the wall. Off. On. No in-between that the circuit has to interpret. No "sort of on." Each generation of hardware gave engineers a physical object that could hold one of two stable states, and hold it reliably, millions of times per second, for years.</p>
+
+            <hr class="divider">
+
+            <h2 id="switches" class="section-heading" style="margin-top:0;">From switches to information</h2>
+
+            <p>One switch gives you two states. Add another, and the combinations multiply.</p>
+
+            <span class="sketch-label">Combinations grow fast</span>
+            <div class="sketch">1 switch   →   2 states
+
+2 switches  →   4 states
+
+3 switches  →   8 states
+
+        ↓
+        ↓
+
+8 switches  →   256 states</div>
+
+            <p>We are not storing numbers yet. We are creating combinations. Each pattern of on and off is a distinct piece of information: a letter, a color, an instruction, a memory address. The number of possible patterns grows exponentially with every switch you add.</p>
+
+            <p>Binary isn't the number system we chose because it's elegant. It's the natural unit of a machine made of switches.</p>
+
+            <hr class="divider">
+
+            <h2 id="no-numbers" class="section-heading" style="margin-top:0;">A computer doesn't understand numbers</h2>
+
+            <p>This is the part that changed how I think about all of it.</p>
+
+            <p>When you write <code>150</code> in your code, the computer never sees "one hundred and fifty." It sees a pattern of switches:</p>
+
+            <div class="bit-pattern">
+                <span class="on">ON</span> · <span class="off">OFF</span> · <span class="on">ON</span> · <span class="on">ON</span> · <span class="off">OFF</span> · <span class="off">OFF</span> · <span class="on">ON</span> · <span class="off">OFF</span>
+            </div>
+
+            <p>We give that pattern meaning. We agree that this particular arrangement of switches represents the number 150, or the character 'n', or one pixel of red. The hardware doesn't care. It only knows on and off.</p>
+
+            <div class="reflection-quote">
+                We give meaning. The machine gives states.
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="thesis" class="section-heading" style="margin-top:0;">Binary didn't win because of math</h2>
+
+            <div class="thesis-quote">
+                Binary didn't win because it's mathematically elegant.
+                <span class="line2">It won because it's physically reliable.</span>
+            </div>
+
+            <p>Leibniz admired binary for its symmetry in 1703. That admiration came centuries before anyone built a transistor, or even a relay computer. Binary existed on paper long before it existed in silicon. The math is beautiful. But beauty didn't put a chip in your pocket.</p>
+
+            <p>What did: a system simple enough that real wires, real heat, and real noise couldn't easily corrupt it. Two states. Wide margins. Repeatable, billions of times per second, for decades.</p>
+
+            <hr class="divider">
+
+            <h2 id="others-tried" class="section-heading" style="margin-top:0;">Others tried</h2>
+
+            <p>Binary wasn't the only option on the table. Engineers experimented with other bases. The results are instructive.</p>
+
+            <div class="history-card">
+                <div class="era">1945 · University of Pennsylvania</div>
+                <div class="name">ENIAC</div>
+                <p>ENIAC stored and processed numbers in decimal. Its arithmetic used ten-position ring counters, one state for each digit 0 through 9. It ran on 17,468 vacuum tubes.</p>
+                <p>It worked. It also broke constantly. A single tube failure could corrupt a calculation, and with ten states to keep stable, debugging was slow and painful. Every machine that followed moved toward binary logic. Not because decimal was wrong in theory, but because it was too fragile in practice.</p>
+            </div>
+
+            <div class="history-card">
+                <div class="era">1958 · Moscow State University</div>
+                <div class="name">Setun</div>
+                <p>The Soviet Union built a ternary computer. Base 3. Three states per switch: negative, zero, positive. On paper, ternary is more efficient. You represent larger numbers with fewer digits.</p>
+                <p>Only about fifty Setun machines were ever built. Three stable states are significantly harder to manufacture and maintain than two. The math was elegant. The hardware wasn't cooperative. The project was abandoned.</p>
+            </div>
+
+            <p>Both cases tell the same story from different angles. ENIAC showed that more states means more fragility. Setun showed that even when the math favors a different base, physics pushes back. Binary won not because it was the only option, but because it was the most buildable one.</p>
+
+            <hr class="divider">
+
+            <h2 id="mental-model" class="section-heading" style="margin-top:0;">Mental model</h2>
+
+            <p>If this article rewires one thing, let it be this:</p>
+
+            <div class="mental-model">
+                <div class="mental-box">
+                    <div class="tag">Before</div>
+                    <p>Binary is a numbering system.</p>
+                </div>
+                <div class="mental-box after">
+                    <div class="tag">After</div>
+                    <p>Binary is the consequence of building reliable circuits in an imperfect world.</p>
+                </div>
+            </div>
+
+            <p>Conversion exercises still matter. But they describe the notation. They don't explain the origin.</p>
+
+            <hr class="divider">
+
+            <h2 id="keep" class="section-heading" style="margin-top:0;">Three sentences to keep</h2>
+
+            <div class="signature-section">
+                <p class="signature-quote">A computer doesn't speak binary. It behaves electrically. Binary is our interpretation of that behavior.</p>
+                <p class="signature-quote">Binary wasn't invented because it is simple. It survived because it is reliable.</p>
+                <p class="signature-quote">Every bit is just a physical switch pretending to be mathematics.</p>
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="references" class="section-heading" style="margin-top:0;">Further reading</h2>
+
+            <ul class="ref-list">
+                <li>Jonathan Levin, <a href="https://newosxbook.com/" target="_blank" rel="noopener"><em>Disarming Code</em></a>. Where this question started.</li>
+                <li>Charles Petzold, <a href="https://www.charlespetzold.com/code/" target="_blank" rel="noopener"><em>Code: The Hidden Language of Computer Hardware and Software</em></a>. From Morse code to microprocessors, one layer at a time.</li>
+                <li>Paul E. Ceruzzi, <em>A History of Modern Computing</em>. Context on ENIAC, early architectures, and the shift to binary.</li>
+            </ul>
+
+            <hr class="divider">
+
+            <h2 id="next" class="section-heading" style="margin-top:0;">What's next</h2>
+
+            <p>We now know why there are only two states. The next question is practical: once you accept that the machine only knows on and off, how should a human actually read it?</p>
+
+            <div class="reflection-quote">
+                How should a human think in binary? Not convert. Recognize.
+            </div>
+
+            <div class="series-teaser">
+                <a href="../think-in-binary/" class="series-teaser-item" style="text-decoration:none;color:inherit;display:block;">
+                    <div class="label">Next in series</div>
+                    <div class="title">Think in Binary</div>
+                    <p class="desc">Powers of 2, weighted switches, and the mental model that makes bit patterns readable at a glance.</p>
+                </a>
+                <a href="../why-eight-bits/" class="series-teaser-item" style="text-decoration:none;color:inherit;display:block;">
+                    <div class="label">Then</div>
+                    <div class="title">Why Eight Bits Won?</div>
+                    <p class="desc">Machines once used 6, 7, and 9-bit bytes. Eight became the standard for reasons that have little to do with physics.</p>
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Discussion -->
+    <section style="border-top:1px solid var(--current-line);padding:3rem 1.5rem 2rem;">
+        <div class="max-w-3xl mx-auto">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--purple);display:block;margin-bottom:0.5rem;">Discussion</span>
+            <h2 style="font-family:'Poppins',sans-serif;font-weight:700;font-size:1.25rem;color:var(--foreground);margin:0 0 1.5rem;">Questions? Disagree with something?</h2>
+            <script src="https://giscus.app/client.js"
+                data-repo="rafaelhziliao/memory-dump"
+                data-repo-id="R_kgDOPl2p4g"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOPl2p4s4C_XEU"
+                data-mapping="pathname"
+                data-strict="1"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="top"
+                data-theme="catppuccin_macchiato"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+            </script>
+        </div>
+    </section>
+
+    <footer style="border-top:1px solid var(--current-line);padding:2rem 1.5rem;margin-top:0;">
+        <div class="max-w-3xl mx-auto flex items-center justify-between" style="flex-wrap:wrap;gap:1rem;">
+            <a href="../" style="text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--comment);">
+                ← Memory Dump
+            </a>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--comment);">
+                Why Binary Won? · Essay 1 of 3
+            </span>
+        </div>
+    </footer>
+
+    <script>
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            document.getElementById('progress-bar').style.width = pct + '%';
+        });
+    </script>
+
+</body>
+</html>

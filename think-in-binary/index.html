@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Think in Binary | Memory Dump</title>
+    <meta name="description" content="Stop converting decimal to binary. Learn to read bit patterns the way experienced engineers do: by recognizing weights, not running algorithms.">
+    <meta property="og:title" content="Think in Binary | Memory Dump">
+    <meta property="og:description" content="Don't convert. Recognize. How experienced engineers read binary almost instantly.">
+    <meta property="og:type" content="article">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Think in Binary | Memory Dump">
+    <meta name="twitter:description" content="Don't convert. Recognize. How experienced engineers read binary almost instantly.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Poppins:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/theme.css">
+    <style>
+        .article-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--orange);
+            background: rgba(255, 184, 108, 0.08);
+            border: 1px solid rgba(255, 184, 108, 0.25);
+            border-radius: 999px;
+            padding: 0.25rem 0.875rem;
+        }
+
+        .sketch {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8125rem;
+            line-height: 1.6;
+            background: #1e1f29;
+            border: 1px dashed rgba(98, 114, 164, 0.55);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            margin: 1.75rem 0;
+            color: var(--foreground);
+            opacity: 0.92;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .sketch-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .method-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 640px) {
+            .method-grid { grid-template-columns: 1fr; }
+        }
+
+        .method-box {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .method-box.preferred {
+            border-color: rgba(139, 233, 253, 0.35);
+            background: rgba(139, 233, 253, 0.04);
+        }
+
+        .method-box .tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.5rem;
+        }
+
+        .method-box.preferred .tag { color: var(--cyan); }
+
+        .powers-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+        }
+
+        .powers-table th,
+        .powers-table td {
+            padding: 0.5rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--current-line);
+        }
+
+        .powers-table th {
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--comment);
+        }
+
+        .powers-table td:last-child {
+            color: var(--cyan);
+            font-weight: 700;
+        }
+
+        .powers-table tr:hover td {
+            background: rgba(139, 233, 253, 0.04);
+        }
+
+        .lego-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            padding: 1rem 1.25rem;
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+        }
+
+        .lego-bit {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--green);
+            background: rgba(80, 250, 123, 0.1);
+            border: 1px solid rgba(80, 250, 123, 0.25);
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .lego-arrow {
+            color: var(--comment);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lego-result {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        /* Switch walkthrough */
+        .switch-walk {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            margin: 1.5rem 0;
+        }
+
+        .switch-walk-header {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--comment);
+            padding: 0.75rem 1.25rem;
+            background: rgba(98, 114, 164, 0.08);
+            border-bottom: 1px solid var(--comment);
+        }
+
+        .switch-row {
+            display: grid;
+            grid-template-columns: 2rem 3rem 3.5rem 1fr;
+            gap: 0.75rem;
+            align-items: center;
+            padding: 0.65rem 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            border-bottom: 1px solid rgba(98, 114, 164, 0.15);
+        }
+
+        .switch-row:last-child { border-bottom: none; }
+
+        @media (max-width: 540px) {
+            .switch-row {
+                grid-template-columns: 2rem 3rem 3.5rem;
+                grid-template-rows: auto auto;
+            }
+            .switch-action { grid-column: 1 / -1; }
+        }
+
+        .switch-row .sw-bit {
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .switch-row.on .sw-bit { color: var(--green); }
+        .switch-row.off .sw-bit { color: var(--comment); }
+
+        .switch-row .sw-weight {
+            color: var(--cyan);
+            font-weight: 700;
+        }
+
+        .switch-row .sw-state {
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .switch-row.on .sw-state {
+            color: var(--green);
+            background: rgba(80, 250, 123, 0.1);
+            border: 1px solid rgba(80, 250, 123, 0.25);
+        }
+
+        .switch-row.off .sw-state {
+            color: var(--comment);
+            background: rgba(98, 114, 164, 0.08);
+            border: 1px solid rgba(98, 114, 164, 0.2);
+        }
+
+        .switch-row .switch-action {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8125rem;
+            opacity: 0.85;
+            line-height: 1.45;
+        }
+
+        .switch-row.on .switch-action { color: var(--foreground); }
+        .switch-row.off .switch-action { color: var(--comment); }
+
+        .switch-result {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--green);
+            padding: 0.875rem 1.25rem;
+            background: rgba(80, 250, 123, 0.05);
+            border-top: 1px solid rgba(80, 250, 123, 0.15);
+            text-align: center;
+        }
+
+        .shortcut-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 540px) {
+            .shortcut-grid { grid-template-columns: 1fr; }
+        }
+
+        .shortcut-item {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 0.875rem 1.15rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8125rem;
+        }
+
+        .shortcut-item .bits {
+            color: var(--green);
+            margin-bottom: 0.25rem;
+        }
+
+        .shortcut-item .value {
+            color: var(--cyan);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .shortcut-item .note {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            color: var(--comment);
+            margin-top: 0.35rem;
+        }
+
+        /* Exercises */
+        .exercise-group {
+            margin: 2rem 0;
+        }
+
+        .exercise-group-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--purple);
+            margin-bottom: 0.875rem;
+        }
+
+        .exercise-card {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1.15rem 1.35rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .exercise-goal {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--orange);
+            margin-bottom: 0.35rem;
+        }
+
+        .exercise-prompt {
+            font-size: 0.9375rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .exercise-prompt code {
+            font-size: 1em;
+        }
+
+        /* Answers toggle */
+        .answers-toggle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            border: 1px solid var(--comment);
+            background: transparent;
+            color: var(--comment);
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+            margin-top: 1.25rem;
+        }
+
+        .answers-toggle:hover {
+            border-color: var(--purple);
+            color: var(--purple);
+        }
+
+        .answers-panel {
+            display: none;
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--current-line);
+        }
+
+        .answers-panel.visible { display: block; }
+
+        .answer-item {
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem;
+            padding-left: 1.25rem;
+            position: relative;
+            opacity: 0.88;
+        }
+
+        .answer-item::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--green);
+        }
+
+        .answer-item strong {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--cyan);
+        }
+
+        .mental-model {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.75rem 0;
+        }
+
+        @media (max-width: 540px) {
+            .mental-model { grid-template-columns: 1fr; }
+        }
+
+        .mental-box {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .mental-box.after {
+            border-color: rgba(139, 233, 253, 0.35);
+            background: rgba(139, 233, 253, 0.04);
+        }
+
+        .mental-box .tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.5rem;
+        }
+
+        .mental-box.after .tag { color: var(--cyan); }
+
+        .mental-box p {
+            font-size: 0.9375rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .signature-section {
+            margin: 2.5rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .signature-quote {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--foreground);
+            line-height: 1.55;
+            padding: 1.25rem 1.5rem;
+            background: rgba(189, 147, 249, 0.05);
+            border-left: 3px solid var(--purple);
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 0;
+        }
+
+        .series-nav {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin: 1.5rem 0 0;
+        }
+
+        .series-nav a {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--cyan);
+            text-decoration: none;
+        }
+
+        .series-nav a:hover { text-decoration: underline; }
+
+        .series-nav .sep { color: var(--comment); }
+
+        .ref-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .ref-list li {
+            font-size: 0.9375rem;
+            opacity: 0.88;
+            padding-left: 1.25rem;
+            position: relative;
+        }
+
+        .ref-list li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--cyan);
+        }
+
+        .ref-list a {
+            color: var(--cyan);
+            text-decoration: none;
+        }
+
+        .ref-list a:hover { text-decoration: underline; }
+
+        .parting-line {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--comment);
+            text-align: center;
+            line-height: 1.55;
+            margin: 2.5rem 0 0;
+            padding: 1.5rem 2rem;
+            opacity: 0.85;
+        }
+
+        .parting-line em {
+            font-style: normal;
+            color: var(--foreground);
+            opacity: 0.9;
+        }
+
+        .toc {
+            background: var(--current-line);
+            border: 1px solid var(--comment);
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            margin: 2rem 0 2.5rem;
+        }
+
+        .toc-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--comment);
+            margin-bottom: 0.875rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .toc-list a {
+            font-size: 0.9375rem;
+            color: var(--foreground);
+            text-decoration: none;
+            opacity: 0.85;
+            transition: color 0.15s;
+        }
+
+        .toc-list a:hover { color: var(--cyan); opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <div id="progress-bar"></div>
+
+    <nav class="top-nav">
+        <div class="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
+            <a href="../why-binary-won/" style="text-decoration:none;display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--comment);">←</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--comment);letter-spacing:0.1em;text-transform:uppercase;">Why Binary Won?</span>
+            </a>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--orange);font-weight:700;">
+                Essay 2 of 3
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero px-6 py-16 md:py-20">
+        <div class="max-w-3xl mx-auto">
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+                <span class="article-tag">
+                    <span style="font-size:0.55rem;">●</span>
+                    Essay · Binary
+                </span>
+                <span class="meta-item">~10 min read</span>
+                <span style="color:var(--current-line);font-size:0.75rem;">·</span>
+                <span class="meta-item">Binary · Mental Models · Fundamentals</span>
+            </div>
+
+            <h1 style="font-family:'Poppins',sans-serif;font-weight:900;font-size:3.25rem;line-height:1.1;color:var(--foreground);margin-bottom:1rem;">
+                Think in <span style="color:var(--cyan);">Binary</span>
+            </h1>
+
+            <p style="font-size:1.15rem;color:var(--comment);max-width:560px;margin-bottom:0;opacity:1;line-height:1.65;">
+                Stop converting. Start recognizing.
+            </p>
+        </div>
+    </header>
+
+    <main class="px-6 py-12">
+        <div class="max-w-3xl mx-auto">
+
+            <h2 id="wrong-lesson" class="section-heading" style="margin-top:0;">I learned the wrong thing</h2>
+
+            <p>In the <a href="../why-binary-won/" style="color:var(--cyan);text-decoration:none;">previous article</a>, we answered why binary exists: physics favors two stable states. This article asks a different question. Once you accept that the machine only knows on and off, how should a human actually read it?</p>
+
+            <p>Every computer science student eventually learns how to convert decimal to binary. Then they forget it. Not because binary is hard. Because they learned an algorithm instead of building a mental model.</p>
+
+            <div class="reflection-quote">
+                How do experienced engineers read binary almost instantly?
+            </div>
+
+            <p>The gap between "I know how to convert" and "I look at <code>11110000</code> and immediately see 240" is enormous. This article is about closing it.</p>
+
+            <nav class="toc" aria-label="Table of contents">
+                <div class="toc-title">In this article</div>
+                <ol class="toc-list">
+                    <li><a href="#two-ways">Two ways of thinking</a></li>
+                    <li><a href="#positional">Binary is positional</a></li>
+                    <li><a href="#powers">Powers of two</a></li>
+                    <li><a href="#rabbit-hole">🐇 Rabbit Hole</a></li>
+                    <li><a href="#lego">Think LEGO</a></li>
+                    <li><a href="#switches">Follow the switches</a></li>
+                    <li><a href="#patterns">Pattern recognition</a></li>
+                    <li><a href="#shortcuts">Mental shortcuts</a></li>
+                    <li><a href="#reverse">Building blocks in reverse</a></li>
+                    <li><a href="#exercises">Practice</a></li>
+                    <li><a href="#mental-model">Mental model</a></li>
+                    <li><a href="#keep">Three sentences to keep</a></li>
+                    <li><a href="#references">Further reading</a></li>
+                    <li><a href="#next">What's next</a></li>
+                </ol>
+            </nav>
+
+            <hr class="divider">
+
+            <h2 id="two-ways" class="section-heading" style="margin-top:0;">Two ways of thinking</h2>
+
+            <p>There are two ways to get from a number to binary. One is what schools teach. The other is what engineers use.</p>
+
+            <div class="method-grid">
+                <div class="method-box">
+                    <div class="tag">Method 1 · The algorithm</div>
+                    <span class="sketch-label">Decimal → binary</span>
+                    <div class="sketch" style="margin:0.5rem 0 0;">150
+ ↓
+divide by 2
+ ↓
+save remainder
+ ↓
+repeat</div>
+                    <p style="font-size:0.8125rem;color:var(--comment);margin:0.75rem 0 0;">Works. Slow. Easy to forget.</p>
+                </div>
+                <div class="method-box preferred">
+                    <div class="tag">Method 2 · The model</div>
+                    <span class="sketch-label">Binary → decimal</span>
+                    <div class="sketch" style="margin:0.5rem 0 0;">10010110
+ ↓
+128 + 16 + 4 + 2
+ ↓
+150</div>
+                    <p style="font-size:0.8125rem;color:var(--cyan);margin:0.75rem 0 0;">Fast. Sticky. What you'll use in the field.</p>
+                </div>
+            </div>
+
+            <div class="reflection-quote">
+                Which one would you rather do in your head?
+            </div>
+
+            <p>When you're reading a binary value, the problem is almost always decoding what's already there, not building it from decimal. Schools teach Method 1 first. We're starting with Method 2 on purpose. Learn in the order you'll use it.</p>
+
+            <hr class="divider">
+
+            <h2 id="positional" class="section-heading" style="margin-top:0;">Binary is positional</h2>
+
+            <p>There's no magic. Binary works exactly like decimal. Each digit position carries a weight based on the base raised to a power.</p>
+
+            <span class="sketch-label">Decimal · 572</span>
+            <div class="sketch">572  =  5×10²  +  7×10¹  +  2×10⁰
+     =  500    +  70     +  2
+     =  572</div>
+
+            <span class="sketch-label">Binary · 10010110</span>
+            <div class="sketch">10010110  =  1×2⁷ + 0×2⁶ + 0×2⁵ + 1×2⁴ + 0×2³ + 1×2² + 1×2¹ + 0×2⁰
+          =  128  +  0   +  0   +  16   +  0   +  4   +  2   +  0
+          =  150</div>
+
+            <div class="reflection-quote">
+                Same idea. Different base.
+            </div>
+
+            <p>We're using 8 bits in every example. Why eight specifically? That's the next article.</p>
+
+            <hr class="divider">
+
+            <h2 id="powers" class="section-heading" style="margin-top:0;">The only numbers you need to memorize</h2>
+
+            <p>Don't memorize binary numbers. Memorize powers of two. Eight values. That's the entire toolkit.</p>
+
+            <table class="powers-table">
+                <thead>
+                    <tr><th>Bit pattern</th><th>Power</th><th>Decimal</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>10000000</code></td><td>2⁷</td><td>128</td></tr>
+                    <tr><td><code>01000000</code></td><td>2⁶</td><td>64</td></tr>
+                    <tr><td><code>00100000</code></td><td>2⁵</td><td>32</td></tr>
+                    <tr><td><code>00010000</code></td><td>2⁴</td><td>16</td></tr>
+                    <tr><td><code>00001000</code></td><td>2³</td><td>8</td></tr>
+                    <tr><td><code>00000100</code></td><td>2²</td><td>4</td></tr>
+                    <tr><td><code>00000010</code></td><td>2¹</td><td>2</td></tr>
+                    <tr><td><code>00000001</code></td><td>2⁰</td><td>1</td></tr>
+                </tbody>
+            </table>
+
+            <p>Notice the pattern: each row is half the value of the one above it. Once these eight numbers feel familiar, every 8-bit value becomes readable.</p>
+
+            {% from "macros/rabbit-hole.njk" import rabbitHole %}
+            {% call rabbitHole(
+                id="rabbit-hole",
+                teaser="Optional detour: identity matrix, basis vectors, and the 256 corners of an 8-dimensional hypercube.",
+                intro="Sometimes curiosity leads to beautiful detours. These sections are completely optional. Skip them if you just want the main idea, or follow the rabbit if you enjoy exploring deeper connections.",
+                outro="Don't worry if this doesn't make sense yet. You don't need Linear Algebra to read binary. I just thought it was too beautiful not to mention right here, while the table is still in front of you."
+            ) %}
+                    <p>Look at the table again. Every row has exactly one bit set. One switch on, seven off.</p>
+
+                    <p>If you've studied Linear Algebra, that table might look like something you already know. Stack those eight rows and you get the 8×8 identity matrix. Each row is a standard basis vector in ℝ⁸. Each weight column (128, 64, 32, …, 1) is that basis vector scaled to its decimal value.</p>
+
+                    <p>Any 8-bit pattern is a vector of coefficients, each one 0 or 1:</p>
+
+                    <div class="sketch" style="margin:1rem 0;">10010110  →  (1, 0, 0, 1, 0, 1, 1, 0)</div>
+
+                    <p>Pair it with the weight vector:</p>
+
+                    <div class="sketch" style="margin:1rem 0;">w = (128, 64, 32, 16, 8, 4, 2, 1)</div>
+
+                    <p>The decimal value is the dot product <strong>v · w</strong>. You're not adding digits. You're selecting basis directions and scaling them. A set bit means "include this basis vector." A cleared bit means "skip it."</p>
+
+                    <p>One more thing. There are only 256 possible bytes. Eight switches give you eight dimensions, but coefficients are locked to 0 or 1. You don't move freely through ℝ⁸. You visit the corners of an 8-dimensional hypercube. Every byte you will ever read is one of those 256 corners.</p>
+            {% endcall %}
+
+            <hr class="divider">
+
+            <h2 id="lego" class="section-heading" style="margin-top:0;">Think LEGO</h2>
+
+            <p>Each bit that's turned on is a block you snap into place. Reading binary means spotting which blocks are present and adding their weights.</p>
+
+            <p><code>10010110</code></p>
+            <div class="lego-row">
+                <span class="lego-bit">128</span>
+                <span class="lego-bit">16</span>
+                <span class="lego-bit">4</span>
+                <span class="lego-bit">2</span>
+                <span class="lego-arrow">→</span>
+                <span class="lego-result">150</span>
+            </div>
+
+            <p><code>11110000</code></p>
+            <div class="lego-row">
+                <span class="lego-bit">128</span>
+                <span class="lego-bit">64</span>
+                <span class="lego-bit">32</span>
+                <span class="lego-bit">16</span>
+                <span class="lego-arrow">→</span>
+                <span class="lego-result">240</span>
+            </div>
+
+            <p><code>10101010</code></p>
+            <div class="lego-row">
+                <span class="lego-bit">128</span>
+                <span class="lego-bit">32</span>
+                <span class="lego-bit">8</span>
+                <span class="lego-bit">2</span>
+                <span class="lego-arrow">→</span>
+                <span class="lego-result">170</span>
+            </div>
+
+            <p>You're not adding bits. You're selecting weights.</p>
+
+            <hr class="divider">
+
+            <h2 id="switches" class="section-heading" style="margin-top:0;">Follow the switches</h2>
+
+            <p>In the <a href="../why-binary-won/" style="color:var(--cyan);text-decoration:none;">first article</a>, every bit was a physical switch: ON or OFF. Here we use that literally. Each position in an 8-bit byte is one switch, and each switch carries a fixed weight.</p>
+
+            <p>Reading binary means walking the switches left to right and adding the weights of every switch that's ON.</p>
+
+            <div class="switch-walk">
+                <div class="switch-walk-header">Reading · 10010110 → ?</div>
+                <div class="switch-row on">
+                    <span class="sw-bit">1</span>
+                    <span class="sw-weight">128</span>
+                    <span class="sw-state">ON</span>
+                    <span class="switch-action">Switch is on. 128 enters the total. Running sum: 128</span>
+                </div>
+                <div class="switch-row off">
+                    <span class="sw-bit">0</span>
+                    <span class="sw-weight">64</span>
+                    <span class="sw-state">OFF</span>
+                    <span class="switch-action">Switch is off. 64 does not enter. Running sum: 128</span>
+                </div>
+                <div class="switch-row off">
+                    <span class="sw-bit">0</span>
+                    <span class="sw-weight">32</span>
+                    <span class="sw-state">OFF</span>
+                    <span class="switch-action">Switch is off. 32 does not enter. Running sum: 128</span>
+                </div>
+                <div class="switch-row on">
+                    <span class="sw-bit">1</span>
+                    <span class="sw-weight">16</span>
+                    <span class="sw-state">ON</span>
+                    <span class="switch-action">Switch is on. 16 enters the total. Running sum: 144</span>
+                </div>
+                <div class="switch-row off">
+                    <span class="sw-bit">0</span>
+                    <span class="sw-weight">8</span>
+                    <span class="sw-state">OFF</span>
+                    <span class="switch-action">Switch is off. 8 does not enter. Running sum: 144</span>
+                </div>
+                <div class="switch-row on">
+                    <span class="sw-bit">1</span>
+                    <span class="sw-weight">4</span>
+                    <span class="sw-state">ON</span>
+                    <span class="switch-action">Switch is on. 4 enters the total. Running sum: 148</span>
+                </div>
+                <div class="switch-row on">
+                    <span class="sw-bit">1</span>
+                    <span class="sw-weight">2</span>
+                    <span class="sw-state">ON</span>
+                    <span class="switch-action">Switch is on. 2 enters the total. Running sum: 150</span>
+                </div>
+                <div class="switch-row off">
+                    <span class="sw-bit">0</span>
+                    <span class="sw-weight">1</span>
+                    <span class="sw-state">OFF</span>
+                    <span class="switch-action">Switch is off. 1 does not enter. Running sum: 150</span>
+                </div>
+                <div class="switch-result">10010110 = 150</div>
+            </div>
+
+            <p>Building a number works the same way, in reverse. You start with a target and walk the switches from heaviest to lightest. If the weight fits in what's still needed, flip the switch ON. If it doesn't, leave it OFF.</p>
+
+            <div class="switch-walk">
+                <div class="switch-walk-header">Building · 150 → ?</div>
+                <div class="switch-row on">
+                    <span class="sw-bit">1</span>
+                    <span class="sw-weight">128</span>
+                    <span class="sw-state">ON</span>
+                    <span class="switch-action">128 fits in 150. Switch on. Still need: 22</span>
+                </div>
+                <div class="switch-row off">
+                    <span class="sw-bit">0</span>
+                    <span class="sw-weight">64</span>
+                    <span class="sw-state">OFF</span>
+                    <span class="switch-action">64 doesn't fit in 22. Switch off. Still need: 22</span>
+                </div>
+                <div class="switch-row off">
+                    <span class="sw-bit">0</span>
+                    <span class="sw-weight">32</span>
+                    <span class="sw-state">OFF</span>
+                    <span class="switch-action">32 doesn't fit in 22. Switch off. Still need: 22</span>
+                </div>
+                <div class="switch-row on">
+                    <span class="sw-bit">1</span>
+                    <span class="sw-weight">16</span>
+                    <span class="sw-state">ON</span>
+                    <span class="switch-action">16 fits in 22. Switch on. Still need: 6</span>
+                </div>
+                <div class="switch-row off">
+                    <span class="sw-bit">0</span>
+                    <span class="sw-weight">8</span>
+                    <span class="sw-state">OFF</span>
+                    <span class="switch-action">8 doesn't fit in 6. Switch off. Still need: 6</span>
+                </div>
+                <div class="switch-row on">
+                    <span class="sw-bit">1</span>
+                    <span class="sw-weight">4</span>
+                    <span class="sw-state">ON</span>
+                    <span class="switch-action">4 fits in 6. Switch on. Still need: 2</span>
+                </div>
+                <div class="switch-row on">
+                    <span class="sw-bit">1</span>
+                    <span class="sw-weight">2</span>
+                    <span class="sw-state">ON</span>
+                    <span class="switch-action">2 fits in 2. Switch on. Still need: 0</span>
+                </div>
+                <div class="switch-row off">
+                    <span class="sw-bit">0</span>
+                    <span class="sw-weight">1</span>
+                    <span class="sw-state">OFF</span>
+                    <span class="switch-action">Nothing left to form. Switch off. Done.</span>
+                </div>
+                <div class="switch-result">150 = 10010110</div>
+            </div>
+
+            <p>Same switches. Same weights. Reading adds them up. Building decides which ones to flip. The LEGO blocks from the previous section are just the switches that ended up ON.</p>
+
+            <hr class="divider">
+
+            <h2 id="patterns" class="section-heading" style="margin-top:0;">Why your brain can learn this</h2>
+
+            <p>You don't read the word CAT by sounding out C-A-T letter by letter. You recognize the shape. After enough exposure, binary works the same way.</p>
+
+            <p>After enough exposure, common patterns become instant. When you see <code>11111111</code>, you don't calculate eight additions. You recognize: every switch on, maximum value for one byte. 255.</p>
+
+            <p>Pattern recognition is faster than calculation. The goal isn't to become a human calculator. It's to build enough familiarity that common patterns become instant.</p>
+
+            <hr class="divider">
+
+            <h2 id="shortcuts" class="section-heading" style="margin-top:0;">Mental shortcuts</h2>
+
+            <p>Before the shortcuts feel like magic, understand why they work. <code>11111111</code> means every weight is selected: 128 + 64 + 32 + 16 + 8 + 4 + 2 + 1 = 255. All bits on equals the maximum. All bits off equals zero. Everything else is a subset.</p>
+
+            <div class="shortcut-grid">
+                <div class="shortcut-item">
+                    <div class="bits">11111111</div>
+                    <div class="value">255</div>
+                    <div class="note">All weights selected</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="bits">10000000</div>
+                    <div class="value">128</div>
+                    <div class="note">Highest bit only</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="bits">01111111</div>
+                    <div class="value">127</div>
+                    <div class="note">All except highest</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="bits">00001111</div>
+                    <div class="value">15</div>
+                    <div class="note">Lower half only</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="bits">11110000</div>
+                    <div class="value">240</div>
+                    <div class="note">Upper half only</div>
+                </div>
+                <div class="shortcut-item">
+                    <div class="bits">10101010</div>
+                    <div class="value">170</div>
+                    <div class="note">Every other bit</div>
+                </div>
+            </div>
+
+            <p>These aren't tricks to memorize in isolation. They're patterns worth recognizing on sight. The more you see them, the faster you read them.</p>
+
+            <hr class="divider">
+
+            <h2 id="reverse" class="section-heading" style="margin-top:0;">Building blocks in reverse</h2>
+
+            <p>Reading binary is the primary skill. But once you've walked the switches a few times, the reverse direction stops feeling like a separate algorithm.</p>
+
+            <p>Ask one question per switch, largest weight first: <em>does this fit in what's still needed?</em> If yes, flip it ON and subtract. If no, leave it OFF and move on. The switch walkthrough above is the entire method.</p>
+
+            <p>Method 1 from the beginning (divide by 2, save remainder, repeat) produces the same result. But you'll rarely need it once the switches make sense.</p>
+
+            <hr class="divider">
+
+            <h2 id="exercises" class="section-heading" style="margin-top:0;">Practice</h2>
+
+            <p>Eight exercises. Each one targets a single skill. Try them before looking at the answers.</p>
+
+            <div class="exercise-group">
+                <div class="exercise-group-title">Read binary → decimal</div>
+
+                <div class="exercise-card">
+                    <div class="exercise-goal">Skill · Pick sparse weights</div>
+                    <p class="exercise-prompt">What is <code>10010001</code> in decimal?</p>
+                </div>
+
+                <div class="exercise-card">
+                    <div class="exercise-goal">Skill · Recognize a block of ON switches</div>
+                    <p class="exercise-prompt">What is <code>11110000</code> in decimal?</p>
+                </div>
+
+                <div class="exercise-card">
+                    <div class="exercise-goal">Skill · Spot an alternating pattern</div>
+                    <p class="exercise-prompt">What is <code>10101010</code> in decimal?</p>
+                </div>
+            </div>
+
+            <div class="exercise-group">
+                <div class="exercise-group-title">Build decimal → binary</div>
+
+                <div class="exercise-card">
+                    <div class="exercise-goal">Skill · Decompose a small number</div>
+                    <p class="exercise-prompt">Represent <code>42</code> in 8-bit binary.</p>
+                </div>
+
+                <div class="exercise-card">
+                    <div class="exercise-goal">Skill · Combine multiple weights</div>
+                    <p class="exercise-prompt">Represent <code>150</code> in 8-bit binary.</p>
+                </div>
+
+                <div class="exercise-card">
+                    <div class="exercise-goal">Skill · Work through a larger value</div>
+                    <p class="exercise-prompt">Represent <code>213</code> in 8-bit binary.</p>
+                </div>
+            </div>
+
+            <div class="exercise-group">
+                <div class="exercise-group-title">Think with switches</div>
+
+                <div class="exercise-card">
+                    <div class="exercise-goal">Skill · Flip one switch off</div>
+                    <p class="exercise-prompt"><code>11111111</code> is 255. Turn off the 128 switch. What's the new decimal value?</p>
+                </div>
+
+                <div class="exercise-card">
+                    <div class="exercise-goal">Skill · Pick specific weights</div>
+                    <p class="exercise-prompt">Turn on only the 32, 8, and 1 switches. What binary pattern and decimal value do you get?</p>
+                </div>
+            </div>
+
+            <button class="answers-toggle" id="answers-toggle" onclick="toggleAnswers()">Show answers</button>
+
+            <div class="answers-panel" id="answers-panel">
+                <div class="answer-item"><strong>10010001</strong> = 128 + 16 + 1 = <strong>145</strong></div>
+                <div class="answer-item"><strong>11110000</strong> = 128 + 64 + 32 + 16 = <strong>240</strong></div>
+                <div class="answer-item"><strong>10101010</strong> = 128 + 32 + 8 + 2 = <strong>170</strong></div>
+                <div class="answer-item"><strong>42</strong> = 32 + 8 + 2 = <strong>00101010</strong></div>
+                <div class="answer-item"><strong>150</strong> = 128 + 16 + 4 + 2 = <strong>10010110</strong></div>
+                <div class="answer-item"><strong>213</strong> = 128 + 64 + 16 + 4 + 1 = <strong>11010101</strong></div>
+                <div class="answer-item"><strong>11111111</strong>, 128 switch off → <strong>127</strong> (<code>01111111</code>)</div>
+                <div class="answer-item"><strong>32 + 8 + 1</strong> → <strong>00101001</strong> = <strong>41</strong></div>
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="mental-model" class="section-heading" style="margin-top:0;">Mental model</h2>
+
+            <div class="mental-model">
+                <div class="mental-box">
+                    <div class="tag">Before</div>
+                    <p>Binary is a conversion algorithm.</p>
+                </div>
+                <div class="mental-box after">
+                    <div class="tag">After</div>
+                    <p>Binary is a collection of weighted switches.</p>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="keep" class="section-heading" style="margin-top:0;">Three sentences to keep</h2>
+
+            <div class="signature-section">
+                <p class="signature-quote">Don't convert. Recognize.</p>
+                <p class="signature-quote">Every bit is a switch carrying a weight.</p>
+                <p class="signature-quote">You're not adding bits. You're selecting weights.</p>
+            </div>
+
+            <hr class="divider">
+
+            <h2 id="references" class="section-heading" style="margin-top:0;">Further reading</h2>
+
+            <ul class="ref-list">
+                <li><a href="../why-binary-won/">Why Binary Won?</a> The first essay in this series.</li>
+                <li>Charles Petzold, <a href="https://www.charlespetzold.com/code/" target="_blank" rel="noopener"><em>Code</em></a>. Chapter 9 covers binary and positional notation from first principles.</li>
+            </ul>
+
+            <p class="parting-line">There are only 10 types of people in the world.<br><em>If you just smiled, you got it.</em></p>
+
+            <hr class="divider">
+
+            <h2 id="next" class="section-heading" style="margin-top:0;">What's next</h2>
+
+            <p>We can now read binary. The next question in the series: why group switches in eights?</p>
+
+            <div class="reflection-quote">
+                If switches can be grouped in any quantity, why did eight become the standard?
+            </div>
+
+            <div class="series-nav">
+                <a href="../why-binary-won/">← Why Binary Won?</a>
+                <span class="sep">·</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--comment);">Think in Binary</span>
+                <span class="sep">·</span>
+                <a href="../why-eight-bits/">Why Eight Bits Won? →</a>
+            </div>
+
+        </div>
+    </main>
+
+    <section style="border-top:1px solid var(--current-line);padding:3rem 1.5rem 2rem;">
+        <div class="max-w-3xl mx-auto">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--purple);display:block;margin-bottom:0.5rem;">Discussion</span>
+            <h2 style="font-family:'Poppins',sans-serif;font-weight:700;font-size:1.25rem;color:var(--foreground);margin:0 0 1.5rem;">Questions? Different shortcuts you use?</h2>
+            <script src="https://giscus.app/client.js"
+                data-repo="rafaelhziliao/memory-dump"
+                data-repo-id="R_kgDOPl2p4g"
+                data-category="Announcements"
+                data-category-id="DIC_kwDOPl2p4s4C_XEU"
+                data-mapping="pathname"
+                data-strict="1"
+                data-reactions-enabled="1"
+                data-emit-metadata="0"
+                data-input-position="top"
+                data-theme="catppuccin_macchiato"
+                data-lang="en"
+                data-loading="lazy"
+                crossorigin="anonymous"
+                async>
+            </script>
+        </div>
+    </section>
+
+    <footer style="border-top:1px solid var(--current-line);padding:2rem 1.5rem;margin-top:0;">
+        <div class="max-w-3xl mx-auto flex items-center justify-between" style="flex-wrap:wrap;gap:1rem;">
+            <a href="../" style="text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--comment);">
+                ← Memory Dump
+            </a>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--comment);">
+                Think in Binary · Essay 2 of 3
+            </span>
+        </div>
+    </footer>
+
+    <script>
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            document.getElementById('progress-bar').style.width = pct + '%';
+        });
+
+        function toggleAnswers() {
+            const panel = document.getElementById('answers-panel');
+            const btn = document.getElementById('answers-toggle');
+            const visible = panel.classList.toggle('visible');
+            btn.textContent = visible ? 'Hide answers' : 'Show answers';
+        }
+    </script>
+
+    {% include "components/rabbit-hole-script.njk" %}
+
+</body>
+</html>
